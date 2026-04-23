@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nome do Seu Blog</title>
+
+  <script>
+    (function () {
+      var saved = localStorage.getItem('theme');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if ((saved || (prefersDark ? 'dark' : 'light')) === 'dark')
+        document.documentElement.setAttribute('data-theme', 'dark');
+    })();
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent:       #4F6AF5;
+      --accent-dark:  #3a52d4;
+      --accent-light: #eef0fe;
+      --text-dark:    #1a1a2e;
+      --text-body:    #444;
+      --text-muted:   #888;
+      --border:       #e5e7eb;
+      --bg:           #f7f8fc;
+      --white:        #ffffff;
+      --radius:       8px;
+      --shadow:       0 2px 12px rgba(0,0,0,.08);
+      --shadow-hover: 0 8px 28px rgba(79,106,245,.16);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text-body);
+      line-height: 1.6;
+      font-size: 16px;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+
+    /* ── READING PROGRESS ── */
+    #reading-bar {
+      position: fixed; top: 0; left: 0;
+      height: 3px; width: 0%;
+      background: linear-gradient(90deg, var(--accent), #a78bfa);
+      z-index: 1000; transition: width .08s linear;
+      border-radius: 0 2px 2px 0;
+    }
+
+    /* ── KEYFRAMES ── */
+    @keyframes slideDown  { from { transform: translateY(-100%); opacity:0 } to { transform:translateY(0); opacity:1 } }
+    @keyframes fadeInUp   { from { opacity:0; transform:translateY(32px) } to { opacity:1; transform:translateY(0) } }
+    @keyframes fadeInLeft { from { opacity:0; transform:translateX(-40px) } to { opacity:1; transform:translateX(0) } }
+    @keyframes fadeInRight{ from { opacity:0; transform:translateX(40px) } to { opacity:1; transform:translateX(0) } }
+    @keyframes kenBurns   { from { transform:scale(1) } to { transform:scale(1.09) translate(-1%,-1%) } }
+    @keyframes pulseRing  { 0%{box-shadow:0 0 0 0 rgba(79,106,245,.45)} 70%{box-shadow:0 0 0 10px rgba(79,106,245,0)} 100%{box-shadow:0 0 0 0 rgba(79,106,245,0)} }
+    @keyframes slideUp    { from { transform:translateY(100%); opacity:0 } to { transform:translateY(0); opacity:1 } }
+    @keyframes fadeIn     { from { opacity:0 } to { opacity:1 } }
+
+    /* ── SCROLL-REVEAL ── */
+    .reveal { opacity:0; transform:translateY(26px); transition: opacity .55s ease, transform .55s ease; transition-delay: var(--delay,0s); }
+    .reveal.from-left  { transform:translateX(-26px); }
+    .reveal.from-right { transform:translateX(26px); }
+    .reveal.visible    { opacity:1; transform:none; }
+
+    /* ════════ ANNOUNCEMENT BAR ════════ */
+    .announce-bar {
+      background: var(--accent);
+      color: white;
+      font-size: .82rem;
+      font-weight: 500;
+      padding: 9px 20px;
+      text-align: center;
+      position: relative;
+      animation: fadeIn .4s ease both;
+    }
+    .announce-bar a { color: white; font-weight: 700; text-decoration: underline; margin-left: 6px; }
+    .announce-bar a:hover { opacity: .85; }
+    .announce-close {
+      position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: rgba(255,255,255,.8);
+      font-size: 1rem; cursor: pointer; line-height: 1; padding: 2px 6px;
+      border-radius: 4px; transition: background .2s;
+    }
+    .announce-close:hover { background: rgba(255,255,255,.2); color: white; }
+    .announce-bar.hidden { display: none; }
+
+    /* ════════ HEADER ════════ */
+    header {
+      background: var(--white); border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow);
+      animation: slideDown .45s cubic-bezier(.22,.68,0,1.2) both;
+    }
+    .header-inner {
+      display: flex; align-items: center; gap: 20px;
+      padding: 14px 24px; max-width: 1200px; margin: 0 auto;
+    }
+    .logo {
+      font-size: 1rem; font-weight: 700; color: var(--accent);
+      border: 2px dashed var(--accent); padding: 7px 16px;
+      border-radius: var(--radius); white-space: nowrap; flex-shrink: 0;
+      transition: background .2s, color .2s;
+    }
+    .logo:hover { background: var(--accent); color: white; }
+
+    nav { display: flex; align-items: center; gap: 2px; flex: 1; }
+    nav a {
+      position: relative; padding: 8px 14px; border-radius: var(--radius);
+      font-size: .93rem; color: var(--text-dark); font-weight: 500; transition: color .2s;
+    }
+    nav a::after {
+      content:''; position:absolute; bottom:4px; left:14px; right:14px; height:2px;
+      background:var(--accent); transform:scaleX(0); transform-origin:left;
+      transition:transform .25s ease; border-radius:2px;
+    }
+    nav a:hover { color: var(--accent); }
+    nav a:hover::after, nav a.active::after { transform: scaleX(1); }
+    nav a.active { color: var(--accent); font-weight: 700; }
+
+    .header-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .search-wrap {
+      display: flex; align-items: center; background: var(--bg);
+      border: 1px solid var(--border); border-radius: 20px; padding: 7px 14px;
+      gap: 8px; transition: border .2s, box-shadow .2s;
+    }
+    .search-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,106,245,.12); }
+    .search-wrap svg { color: var(--text-muted); flex-shrink: 0; }
+    .search-wrap input { border:none; background:transparent; outline:none; font-size:.88rem; color:var(--text-dark); width:150px; }
+    .search-wrap input::placeholder { color: var(--text-muted); }
+
+    .btn-subscribe {
+      background: var(--accent); color: white; border: none; padding: 9px 22px;
+      border-radius: 20px; font-size: .88rem; font-weight: 700; cursor: pointer;
+      transition: background .2s, transform .15s, box-shadow .2s; white-space: nowrap;
+    }
+    .btn-subscribe:hover { background: var(--accent-dark); transform: scale(1.04); box-shadow: 0 4px 14px rgba(79,106,245,.35); }
+
+    /* Theme toggle */
+    .theme-toggle {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border);
+      background: transparent; cursor: pointer; color: var(--text-muted);
+      flex-shrink: 0; padding: 0; transition: background .2s, color .2s, border-color .2s, transform .25s;
+    }
+    .theme-toggle:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); transform: rotate(22deg) scale(1.12); }
+    [data-theme="dark"] .theme-toggle:hover { transform: rotate(-22deg) scale(1.12); }
+    .theme-toggle .icon-sun  { display: none; }
+    .theme-toggle .icon-moon { display: block; }
+    [data-theme="dark"] .theme-toggle .icon-sun  { display: block; }
+    [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
+    /* Hamburger */
+    .hamburger { display:none; flex-direction:column; gap:5px; cursor:pointer; padding:4px; margin-left: auto; }
+    .hamburger span { display:block; width:24px; height:2px; background:var(--text-dark); border-radius:2px; transition:all .3s; }
+    .hamburger.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity:0; transform:scaleX(0); }
+    .hamburger.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+
+    .mobile-nav { display:none; background:var(--white); border-top:1px solid var(--border); padding:12px 24px 20px; }
+    .mobile-nav.open { display:block; animation:fadeInUp .25s ease both; }
+    .mobile-nav a { display:block; padding:11px 0; border-bottom:1px solid var(--border); font-weight:500; color:var(--text-dark); transition:color .2s, padding-left .2s; }
+    .mobile-nav a:hover { color:var(--accent); padding-left:6px; }
+    .mobile-search { margin-top:14px; display:flex; align-items:center; background:var(--bg); border:1px solid var(--border); border-radius:20px; padding:9px 14px; gap:8px; }
+    .mobile-search input { border:none; background:transparent; outline:none; font-size:.9rem; flex:1; color:var(--text-dark); }
+    .mobile-nav .btn-subscribe { margin-top:14px; width:100%; border-radius:8px; padding:12px; }
+
+    /* ════════ HERO ════════ */
+    .hero { background:var(--white); border-bottom:1px solid var(--border); overflow:hidden; }
+    .hero-inner { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; min-height:460px; }
+    .hero-image { overflow:hidden; position:relative; background:var(--accent-light); }
+    .hero-image img { width:100%; height:100%; object-fit:cover; animation:kenBurns 20s ease-in-out alternate infinite, fadeInLeft .7s ease both; }
+    .hero-image::after { content:''; position:absolute; inset:0; background:linear-gradient(to right,transparent 60%,rgba(255,255,255,.2)); pointer-events:none; }
+    .hero-content { padding:52px; display:flex; flex-direction:column; justify-content:center; gap:18px; }
+    .hero-content > * { animation:fadeInRight .6s ease both; }
+    .hero-content > *:nth-child(1){animation-delay:.15s}
+    .hero-content > *:nth-child(2){animation-delay:.28s}
+    .hero-content > *:nth-child(3){animation-delay:.40s}
+    .hero-content > *:nth-child(4){animation-delay:.52s}
+    .hero-content > *:nth-child(5){animation-delay:.62s}
+    .hero-meta { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .tag {
+      display:inline-block; background:var(--accent); color:white;
+      font-size:.72rem; font-weight:700; padding:4px 12px; border-radius:20px;
+      text-transform:uppercase; letter-spacing:.6px; transition:transform .2s, box-shadow .2s;
+    }
+    .tag:hover { transform:scale(1.05); box-shadow:0 3px 10px rgba(79,106,245,.35); }
+    .tag.outline { background:var(--accent-light); color:var(--accent); }
+    .meta-text { font-size:.83rem; color:var(--text-muted); }
+    .hero-title { font-size:1.9rem; font-weight:800; color:var(--text-dark); line-height:1.3; }
+    .hero-excerpt { color:var(--text-body); font-size:.97rem; line-height:1.75; }
+    .hero-author { display:flex; align-items:center; gap:10px; }
+    .author-avatar { width:38px; height:38px; border-radius:50%; object-fit:cover; border:2px solid var(--accent-light); transition:transform .2s; }
+    .author-avatar:hover { transform:scale(1.1); }
+    .author-name { font-size:.88rem; font-weight:700; color:var(--text-dark); }
+    .author-role { font-size:.78rem; color:var(--text-muted); }
+    .btn-primary {
+      display:inline-flex; align-items:center; gap:6px; background:var(--accent); color:white;
+      padding:11px 24px; border-radius:6px; font-weight:700; font-size:.93rem;
+      transition:background .2s, transform .15s, box-shadow .2s; align-self:flex-start; border:none; cursor:pointer;
+    }
+    .btn-primary:hover { background:var(--accent-dark); transform:translateY(-2px); box-shadow:0 6px 18px rgba(79,106,245,.38); }
+
+    /* ════════ EM ALTA STRIP ════════ */
+    .hot-strip {
+      background: var(--white); border-bottom: 1px solid var(--border);
+      padding: 24px 0; margin-bottom: 48px;
+    }
+    .hot-strip-inner { max-width:1200px; margin:0 auto; padding:0 24px; }
+    .hot-strip-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .hot-strip-title {
+      font-size: .85rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .8px; color: var(--text-dark);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .hot-badge {
+      background: #ff4d4f; color: white; font-size: .65rem;
+      font-weight: 800; padding: 2px 7px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: .5px;
+    }
+    .hot-see-all { font-size: .82rem; color: var(--accent); font-weight: 600; transition: gap .2s; display:flex; align-items:center; gap:4px; }
+    .hot-see-all:hover { gap: 8px; }
+    .hot-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+    .hot-card {
+      display: flex; gap: 14px; align-items: flex-start; padding: 14px;
+      border: 1px solid var(--border); border-radius: 10px; background: var(--bg);
+      transition: transform .25s, box-shadow .25s, background .25s;
+    }
+    .hot-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); background: var(--white); }
+    .hot-thumb {
+      width: 90px; height: 68px; border-radius: 6px; overflow: hidden; flex-shrink: 0;
+      position: relative;
+    }
+    .hot-thumb img { width:100%; height:100%; object-fit:cover; transition:transform .4s; }
+    .hot-card:hover .hot-thumb img { transform: scale(1.08); }
+    .hot-num {
+      position: absolute; top: 5px; left: 5px;
+      background: rgba(0,0,0,.55); color: white;
+      font-size: .65rem; font-weight: 800; line-height:1;
+      padding: 3px 7px; border-radius: 4px;
+    }
+    .hot-info { display:flex; flex-direction:column; gap:5px; flex:1; min-width:0; }
+    .hot-title {
+      font-size: .88rem; font-weight: 700; color: var(--text-dark);
+      line-height: 1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+      transition: color .2s;
+    }
+    .hot-card:hover .hot-title { color: var(--accent); }
+    .hot-meta { font-size: .75rem; color: var(--text-muted); display:flex; gap:8px; }
+
+    /* ════════ PAGE BODY ════════ */
+    .page-body {
+      max-width:1200px; margin:0 auto 72px; padding:0 24px;
+      display:grid; grid-template-columns:1fr 320px; gap:44px; align-items:start;
+    }
+
+    /* ════════ MAIN COLUMN ════════ */
+    .section-label {
+      font-size:.85rem; font-weight:700; text-transform:uppercase;
+      letter-spacing:.8px; color:var(--accent); border-left:3px solid var(--accent);
+      padding-left:10px; margin-bottom:8px;
+    }
+    .posts-meta { font-size:.8rem; color:var(--text-muted); margin-bottom:20px; padding-left:13px; }
+
+    .post-card {
+      display:grid; grid-template-columns:160px 1fr; gap:20px;
+      padding:22px 14px; border-radius:10px;
+      transition:background .25s, box-shadow .25s, transform .25s;
+    }
+    .post-card:hover { background:var(--white); box-shadow:var(--shadow-hover); transform:translateY(-2px); }
+    .post-card + .post-card { border-top:1px solid var(--border); }
+
+    .post-thumb {
+      border-radius:var(--radius); overflow:hidden; height:118px;
+      background:var(--accent-light); flex-shrink:0; position:relative; display:block;
+    }
+    .post-thumb img { width:100%; height:100%; object-fit:cover; transition:transform .45s cubic-bezier(.25,.46,.45,.94); }
+    .post-thumb::after { content:''; position:absolute; inset:0; background:rgba(79,106,245,0); transition:background .35s; border-radius:var(--radius); }
+    .post-thumb::before { content:'→'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:white; font-size:1.5rem; font-weight:700; z-index:1; opacity:0; transform:scale(.7); transition:opacity .3s, transform .3s; }
+    .post-thumb:hover img { transform:scale(1.1); }
+    .post-thumb:hover::after { background:rgba(79,106,245,.18); }
+    .post-thumb:hover::before { opacity:1; transform:scale(1); }
+
+    .post-info { display:flex; flex-direction:column; gap:7px; }
+    .post-tags { display:flex; gap:6px; flex-wrap:wrap; }
+    .post-title { font-size:1rem; font-weight:700; color:var(--text-dark); line-height:1.45; transition:color .2s; }
+    .post-title:hover { color:var(--accent); }
+    .post-excerpt { font-size:.88rem; color:var(--text-body); line-height:1.65; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+
+    .post-footer {
+      display:flex; align-items:center; gap:12px;
+      font-size:.78rem; color:var(--text-muted); margin-top:4px; flex-wrap:wrap;
+    }
+    .post-footer span { display:flex; align-items:center; gap:3px; }
+    .post-author-avatar { width:20px; height:20px; border-radius:50%; object-fit:cover; border:1px solid var(--border); }
+
+    .post-share { display:flex; align-items:center; gap:6px; margin-top:6px; }
+    .post-share-label { font-size:.75rem; color:var(--text-muted); }
+    .share-btn {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:26px; height:26px; border-radius:6px; border:1px solid var(--border);
+      color:var(--text-muted); background:transparent; transition:all .2s; cursor:pointer;
+    }
+    .share-btn:hover { transform:scale(1.15); }
+    .share-btn.tw:hover  { background:#000;   color:white; border-color:#000; }
+    .share-btn.wa:hover  { background:#25d366; color:white; border-color:#25d366; }
+    .share-btn.li:hover  { background:#0077b5; color:white; border-color:#0077b5; }
+
+    /* ── PAGINATION ── */
+    .pagination { display:flex; justify-content:center; align-items:center; gap:6px; margin-top:36px; padding-top:28px; border-top:1px solid var(--border); }
+    .page-btn { display:inline-flex; align-items:center; justify-content:center; min-width:40px; padding:8px 14px; border:1px solid var(--border); border-radius:6px; font-size:.88rem; color:var(--text-body); background:var(--white); cursor:pointer; transition:all .2s; white-space:nowrap; }
+    .page-btn:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-light); transform:translateY(-1px); }
+    .page-btn.current { background:var(--accent); color:white; border-color:var(--accent); font-weight:700; box-shadow:0 3px 10px rgba(79,106,245,.35); }
+    .page-btn.disabled { opacity:.38; pointer-events:none; }
+    .pagination .dots { font-size:.9rem; color:var(--text-muted); padding:0 4px; }
+
+    /* ════════ SIDEBAR ════════ */
+    .sidebar { display:flex; flex-direction:column; gap:24px; }
+    .sidebar-card { background:var(--white); border-radius:12px; padding:24px; box-shadow:var(--shadow); transition:transform .3s, box-shadow .3s; }
+    .sidebar-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-hover); }
+    .sidebar-card h3 { font-size:.82rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--text-dark); margin-bottom:18px; padding-bottom:10px; border-bottom:2px solid var(--accent); }
+
+    /* About */
+    .about-card { text-align:center; }
+    .about-avatar { width:82px; height:82px; border-radius:50%; object-fit:cover; margin:0 auto 12px; border:3px solid var(--accent-light); animation:pulseRing 2.8s ease-out infinite; transition:transform .3s; }
+    .about-avatar:hover { transform:scale(1.08); }
+    .about-name { font-weight:800; font-size:1rem; color:var(--text-dark); margin-bottom:6px; }
+    .about-desc { font-size:.86rem; color:var(--text-muted); line-height:1.65; margin-bottom:16px; }
+
+    /* Social links */
+    .social-links { display:flex; justify-content:center; gap:8px; }
+    .social-btn {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:34px; height:34px; border-radius:8px; border:1px solid var(--border);
+      color:var(--text-muted); background:var(--bg); transition:all .22s cubic-bezier(.34,1.56,.64,1);
+    }
+    .social-btn:hover { transform:scale(1.15) translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.12); }
+    .social-btn.ig:hover  { background:linear-gradient(135deg,#f9ce34,#ee2a7b,#6228d7); color:white; border-color:transparent; }
+    .social-btn.tw:hover  { background:#000; color:white; border-color:#000; }
+    .social-btn.yt:hover  { background:#ff0000; color:white; border-color:#ff0000; }
+    .social-btn.li:hover  { background:#0077b5; color:white; border-color:#0077b5; }
+    .social-btn.fb:hover  { background:#1877f2; color:white; border-color:#1877f2; }
+
+    /* Most read */
+    .most-read-list { list-style:none; display:flex; flex-direction:column; gap:14px; }
+    .most-read-list li { display:flex; gap:12px; align-items:flex-start; transition:transform .2s; }
+    .most-read-list li:hover { transform:translateX(4px); }
+    .rank-num { font-size:1.35rem; font-weight:800; line-height:1; min-width:28px; color:var(--accent-light); flex-shrink:0; }
+    .most-read-list li:nth-child(1) .rank-num { color:var(--accent); }
+    .most-read-list li:nth-child(2) .rank-num { color:#a0abf5; }
+    .most-read-list li:nth-child(3) .rank-num { color:#c4caf8; }
+    .most-read-title { font-size:.86rem; font-weight:600; color:var(--text-dark); line-height:1.45; transition:color .2s; }
+    .most-read-title:hover { color:var(--accent); }
+
+    /* Categories */
+    .categories-list { list-style:none; display:flex; flex-direction:column; gap:10px; }
+    .categories-list li { display:flex; justify-content:space-between; align-items:center; padding:6px 8px; border-radius:6px; transition:background .2s; }
+    .categories-list li:hover { background:var(--accent-light); }
+    .categories-list a { font-size:.9rem; color:var(--text-body); transition:color .2s; }
+    .categories-list li:hover a { color:var(--accent); font-weight:600; }
+    .cat-count { background:var(--accent-light); color:var(--accent); font-size:.72rem; font-weight:700; padding:2px 9px; border-radius:20px; transition:background .2s, color .2s; }
+    .categories-list li:hover .cat-count { background:var(--accent); color:white; }
+
+    /* Tag cloud */
+    .tag-cloud { display:flex; flex-wrap:wrap; gap:8px; }
+    .tag-pill { display:inline-block; background:var(--bg); border:1px solid var(--border); color:var(--text-body); font-size:.8rem; padding:5px 13px; border-radius:20px; transition:all .22s cubic-bezier(.34,1.56,.64,1); }
+    .tag-pill:hover { background:var(--accent); color:white; border-color:var(--accent); transform:scale(1.08) translateY(-1px); box-shadow:0 4px 12px rgba(79,106,245,.3); }
+
+    /* Ad placeholder */
+    .ad-card {
+      border: 2px dashed var(--border); border-radius:12px; padding:24px;
+      text-align:center; background:transparent; transition:border-color .2s;
+    }
+    .ad-card:hover { border-color:var(--accent); }
+    .ad-label { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--text-muted); margin-bottom:10px; }
+    .ad-placeholder {
+      width:100%; height:120px; background:var(--bg); border-radius:8px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:.85rem; color:var(--text-muted); flex-direction:column; gap:6px;
+    }
+    .ad-sizes { font-size:.72rem; color:var(--text-muted); margin-top:8px; }
+
+    /* Newsletter */
+    .newsletter-desc { font-size:.86rem; color:var(--text-muted); margin-bottom:16px; line-height:1.65; }
+    .newsletter-form { display:flex; flex-direction:column; gap:10px; }
+    .newsletter-form input[type="email"] { padding:10px 14px; border:1px solid var(--border); border-radius:6px; font-size:.9rem; outline:none; transition:border .2s, box-shadow .2s; background:var(--bg); color:var(--text-dark); }
+    .newsletter-form input[type="email"]:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(79,106,245,.12); }
+    .newsletter-form input::placeholder { color:var(--text-muted); }
+    .btn-newsletter { background:var(--accent); color:white; border:none; padding:11px; border-radius:6px; font-size:.9rem; font-weight:700; cursor:pointer; transition:background .2s, transform .15s, box-shadow .2s; }
+    .btn-newsletter:hover { background:var(--accent-dark); transform:translateY(-2px); box-shadow:0 5px 16px rgba(79,106,245,.38); }
+
+    /* ════════ MORE POSTS GRID ════════ */
+    .more-posts {
+      background: var(--white);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 48px 0 56px;
+      margin-bottom: 0;
+    }
+    .more-posts-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .more-posts-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .more-posts-title {
+      font-size: .85rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .8px; color: var(--text-dark);
+      border-left: 3px solid var(--accent); padding-left: 10px;
+    }
+    .more-posts-link { font-size: .82rem; color: var(--accent); font-weight: 600; display: flex; align-items: center; gap: 4px; transition: gap .2s; }
+    .more-posts-link:hover { gap: 8px; }
+    .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .card {
+      background: var(--bg); border-radius: 12px; overflow: hidden;
+      border: 1px solid var(--border);
+      transition: transform .3s, box-shadow .3s, background .25s;
+      display: flex; flex-direction: column;
+    }
+    .card:hover { transform: translateY(-5px); box-shadow: var(--shadow-hover); background: var(--white); }
+    .card-image { width: 100%; height: 180px; overflow: hidden; position: relative; flex-shrink: 0; }
+    .card-image img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s cubic-bezier(.25,.46,.45,.94); }
+    .card:hover .card-image img { transform: scale(1.07); }
+    .card-image-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,.35) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .card-category-float {
+      position: absolute; top: 10px; left: 10px;
+      background: var(--accent); color: white;
+      font-size: .65rem; font-weight: 800; padding: 3px 10px;
+      border-radius: 20px; text-transform: uppercase; letter-spacing: .5px;
+    }
+    .card-body { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+    .card-title { font-size: .97rem; font-weight: 700; color: var(--text-dark); line-height: 1.45; transition: color .2s; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .card:hover .card-title { color: var(--accent); }
+    .card-excerpt { font-size: .84rem; color: var(--text-muted); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex: 1; }
+    .card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid var(--border); margin-top: auto; }
+    .card-author { display: flex; align-items: center; gap: 8px; }
+    .card-author img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+    .card-author-name { font-size: .78rem; font-weight: 600; color: var(--text-dark); }
+    .card-meta { display: flex; align-items: center; gap: 10px; font-size: .75rem; color: var(--text-muted); }
+    .card-read-more {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: .78rem; font-weight: 700; color: var(--accent);
+      background: var(--accent-light); padding: 5px 12px; border-radius: 20px;
+      transition: background .2s, gap .2s;
+    }
+    .card:hover .card-read-more { background: var(--accent); color: white; gap: 8px; }
+
+    [data-theme="dark"] .more-posts { background: var(--white); }
+    [data-theme="dark"] .card { background: var(--bg); border-color: var(--border); }
+    [data-theme="dark"] .card:hover { background: #1c2030; }
+    [data-theme="dark"] .card-footer { border-color: var(--border); }
+
+    @media (max-width: 900px) { .cards-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 540px)  { .cards-grid { grid-template-columns: 1fr; } .card-image { height: 200px; } }
+    main .cards-grid { grid-template-columns: repeat(2,1fr); }
+    .more-in-main { margin-top:40px; padding-top:32px; border-top:1px solid var(--border); }
+
+    /* ════════ FOOTER ════════ */
+    footer { background:var(--text-dark); color:#aaa; padding:56px 24px 24px; }
+    .footer-inner { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:1.6fr 1fr 1fr; gap:48px; padding-bottom:40px; border-bottom:1px solid rgba(255,255,255,.08); }
+    .footer-logo { font-size:1rem; font-weight:700; color:var(--accent); border:2px dashed var(--accent); padding:7px 16px; border-radius:var(--radius); display:inline-block; margin-bottom:14px; transition:background .2s, color .2s; }
+    .footer-logo:hover { background:var(--accent); color:white; }
+    .footer-about { font-size:.87rem; line-height:1.75; max-width:270px; margin-bottom:20px; }
+    .footer-social { display:flex; gap:8px; }
+    .footer-social-btn {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:34px; height:34px; border-radius:8px; border:1px solid rgba(255,255,255,.1);
+      color:#888; background:rgba(255,255,255,.04); transition:all .2s;
+    }
+    .footer-social-btn:hover { color:white; border-color:rgba(255,255,255,.3); background:rgba(255,255,255,.1); transform:translateY(-2px); }
+    .footer-col h4 { color:white; font-size:.82rem; font-weight:700; margin-bottom:18px; text-transform:uppercase; letter-spacing:.7px; }
+    .footer-links { list-style:none; display:flex; flex-direction:column; gap:11px; }
+    .footer-links a { font-size:.87rem; color:#888; transition:color .2s, padding-left .2s; display:block; }
+    .footer-links a:hover { color:white; padding-left:4px; }
+    .footer-bottom { max-width:1200px; margin:22px auto 0; display:flex; justify-content:space-between; align-items:center; font-size:.8rem; color:#555; flex-wrap:wrap; gap:8px; }
+    .footer-bottom a { color:var(--accent); }
+    .footer-bottom a:hover { text-decoration:underline; }
+
+    /* ════════ BACK TO TOP ════════ */
+    .back-top {
+      position:fixed; bottom:28px; right:28px; z-index:200;
+      width:44px; height:44px; border-radius:50%;
+      background:var(--accent); color:white; border:none;
+      font-size:1.2rem; cursor:pointer; box-shadow:0 4px 16px rgba(79,106,245,.4);
+      display:flex; align-items:center; justify-content:center;
+      opacity:0; pointer-events:none; transform:translateY(12px);
+      transition:opacity .3s, transform .3s, background .2s, box-shadow .2s;
+    }
+    .back-top.visible { opacity:1; pointer-events:auto; transform:translateY(0); }
+    .back-top:hover { background:var(--accent-dark); box-shadow:0 6px 22px rgba(79,106,245,.55); transform:translateY(-3px); }
+
+    /* ════════ COOKIE BANNER ════════ */
+    .cookie-banner {
+      position:fixed; bottom:0; left:0; right:0; z-index:500;
+      background:var(--white); border-top:1px solid var(--border);
+      box-shadow:0 -4px 24px rgba(0,0,0,.1);
+      animation:slideUp .4s cubic-bezier(.22,.68,0,1.2) both;
+      animation-delay:.8s; opacity:0;
+    }
+    .cookie-banner.visible { opacity:1; }
+    .cookie-banner.hidden { display:none; }
+    .cookie-inner {
+      max-width:1200px; margin:0 auto; padding:18px 24px;
+      display:flex; align-items:center; gap:24px; flex-wrap:wrap;
+    }
+    .cookie-icon { font-size:1.6rem; flex-shrink:0; }
+    .cookie-text { flex:1; min-width:200px; }
+    .cookie-text strong { display:block; font-size:.95rem; color:var(--text-dark); margin-bottom:2px; }
+    .cookie-text p { font-size:.82rem; color:var(--text-muted); }
+    .cookie-text a { color:var(--accent); text-decoration:underline; }
+    .cookie-actions { display:flex; gap:10px; flex-shrink:0; }
+    .btn-cookie-config {
+      padding:9px 18px; border-radius:6px; border:1px solid var(--border);
+      background:transparent; font-size:.85rem; font-weight:600; cursor:pointer;
+      color:var(--text-body); transition:all .2s;
+    }
+    .btn-cookie-config:hover { border-color:var(--accent); color:var(--accent); }
+    .btn-cookie-accept {
+      padding:9px 20px; border-radius:6px; border:none;
+      background:var(--accent); color:white; font-size:.85rem; font-weight:700;
+      cursor:pointer; transition:background .2s, transform .15s;
+    }
+    .btn-cookie-accept:hover { background:var(--accent-dark); transform:scale(1.03); }
+
+    /* ════════ RESPONSIVE ════════ */
+    @media (max-width:900px) {
+      .page-body { grid-template-columns:1fr; }
+      .hot-grid { grid-template-columns:1fr 1fr; }
+    }
+    @media (max-width:768px) {
+      nav, .header-actions { display:none; }
+      .hamburger { display:flex; }
+      .hero-inner { grid-template-columns:1fr; min-height:auto; }
+      .hero-image { height:240px; }
+      .hero-content { padding:28px 24px 36px; }
+      .hero-title { font-size:1.45rem; }
+      .post-card { grid-template-columns:110px 1fr; gap:14px; }
+      .post-thumb { height:92px; }
+      .footer-inner { grid-template-columns:1fr; gap:28px; }
+      .footer-about { max-width:100%; }
+      .hot-grid { grid-template-columns:1fr; }
+      .cookie-inner { flex-direction:column; align-items:flex-start; }
+    }
+    @media (max-width:480px) {
+      .post-card { grid-template-columns:1fr; }
+      .post-thumb { height:180px; }
+      .header-inner { padding:12px 16px; }
+      .page-body { padding:0 16px; }
+      .hot-strip-inner { padding:0 16px; }
+      .back-top { bottom:20px; right:20px; }
+    }
+
+    /* ════════ DARK MODE ════════ */
+    [data-theme="dark"] {
+      --bg:           #0d0f18;
+      --white:        #161926;
+      --text-dark:    #e8eaf6;
+      --text-body:    #9da3b8;
+      --text-muted:   #52566a;
+      --border:       #242740;
+      --accent-light: #191d38;
+      --shadow:       0 2px 12px rgba(0,0,0,.55);
+      --shadow-hover: 0 8px 28px rgba(79,106,245,.38);
+    }
+
+    body, header, footer, .hero, .hot-strip, .mobile-nav,
+    .sidebar-card, .search-wrap, .page-btn,
+    .newsletter-form input[type="email"], .cookie-banner {
+      transition-property: background-color, border-color, color, box-shadow;
+      transition-duration: .35s; transition-timing-function: ease;
+    }
+
+    [data-theme="dark"] footer { background:#080a12; }
+    [data-theme="dark"] .footer-inner { border-color:rgba(255,255,255,.05); }
+    [data-theme="dark"] .footer-about { color:var(--text-muted); }
+    [data-theme="dark"] .footer-links a { color:#444868; }
+    [data-theme="dark"] .footer-links a:hover { color:#9da3b8; }
+    [data-theme="dark"] .footer-col h4 { color:#c8cade; }
+    [data-theme="dark"] .footer-bottom { color:#32364a; }
+    [data-theme="dark"] .mobile-nav { background:var(--white); border-color:var(--border); }
+    [data-theme="dark"] .mobile-nav a { border-color:var(--border); color:var(--text-body); }
+    [data-theme="dark"] .mobile-search { background:var(--bg); border-color:var(--border); }
+    [data-theme="dark"] .hero-image::after { background:linear-gradient(to right,transparent 60%,rgba(22,25,38,.25)); }
+    [data-theme="dark"] .newsletter-form input[type="email"] { background:var(--bg); color:var(--text-dark); }
+    [data-theme="dark"] .tag-pill { background:var(--white); border-color:var(--border); color:var(--text-body); }
+    [data-theme="dark"] .rank-num { color:#2c3055; }
+    [data-theme="dark"] .most-read-list li:nth-child(2) .rank-num { color:#5263b8; }
+    [data-theme="dark"] .most-read-list li:nth-child(3) .rank-num { color:#3a4490; }
+    [data-theme="dark"] .post-card:hover { background:#1c2030; }
+    [data-theme="dark"] .search-wrap { background:var(--bg); }
+    [data-theme="dark"] .hot-card { background:var(--bg); }
+    [data-theme="dark"] .hot-card:hover { background:#1c2030; }
+    [data-theme="dark"] .ad-placeholder { background:#0f111e; }
+    [data-theme="dark"] .mobile-search input { color:var(--text-dark); }
+    [data-theme="dark"] .cookie-banner { background:#161926; border-color:var(--border); }
+
+    /* ════════ REDUCED MOTION ════════ */
+    @media (prefers-reduced-motion:reduce) {
+      *, *::before, *::after { animation:none !important; transition-duration:.01ms !important; }
+      .reveal { opacity:1 !important; transform:none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="reading-bar"></div>
+
+<!-- ══ ANNOUNCEMENT BAR ══ -->
+<div class="announce-bar" id="announceBar">
+  🎉 <strong>Novidade:</strong> Confira nossa série especial de conteúdos sobre [tema em destaque].
+  <a href="#">Acessar agora →</a>
+  <button class="announce-close" onclick="closeAnnounce()" aria-label="Fechar">✕</button>
+</div>
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div class="header-inner">
+    <div class="logo">[ SUA LOGO AQUI ]</div>
+    <nav>
+      <a href="#" class="active">Início</a>
+      <a href="#">Categorias</a>
+      <a href="#">Sobre</a>
+      <a href="#">Contato</a>
+    </nav>
+    <div class="header-actions">
+      <div class="search-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" placeholder="Buscar no blog...">
+      </div>
+      <button class="btn-subscribe">Assinar</button>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Alternar modo escuro/claro">
+      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="icon-sun"  width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+    <div class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Abrir menu">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+  <div class="mobile-nav" id="mobileNav">
+    <a href="#">Início</a>
+    <a href="#">Categorias</a>
+    <a href="#">Sobre</a>
+    <a href="#">Contato</a>
+    <div class="mobile-search">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="search" placeholder="Buscar no blog...">
+    </div>
+    <button class="btn-subscribe">Assinar</button>
+  </div>
+</header>
+
+<!-- ══ HERO ══ -->
+<section class="hero" aria-label="Post em destaque">
+  <div class="hero-inner">
+    <div class="hero-image">
+      <img src="https://picsum.photos/id/1018/700/460" alt="Imagem do post em destaque">
+    </div>
+    <div class="hero-content">
+      <div class="hero-meta">
+        <span class="tag">Categoria do Post</span>
+        <span class="meta-text">22 de abril de 2026</span>
+        <span class="meta-text">· 5 min de leitura</span>
+      </div>
+      <h1 class="hero-title">Aqui vai o título do post em destaque — chamativo, claro e direto ao ponto</h1>
+      <p class="hero-excerpt">Aqui ficará o trecho de abertura do post em destaque. Esse texto deve despertar a curiosidade do leitor e convidá-lo a continuar lendo. Substitua por um resumo real do conteúdo principal.</p>
+      <div class="hero-author">
+        <img class="author-avatar" src="https://picsum.photos/id/1005/40/40" alt="Foto do autor">
+        <div>
+          <div class="author-name">Nome do Autor</div>
+          <div class="author-role">Cargo ou especialidade do autor</div>
+        </div>
+      </div>
+      <a href="#" class="btn-primary">Ler mais &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══ EM ALTA STRIP ══ -->
+<section class="hot-strip reveal" aria-label="Em alta esta semana">
+  <div class="hot-strip-inner">
+    <div class="hot-strip-header">
+      <span class="hot-strip-title">
+        <span class="hot-badge">Em Alta</span>
+        Esta Semana
+      </span>
+      <a href="#" class="hot-see-all">Ver todos <span>→</span></a>
+    </div>
+    <div class="hot-grid">
+      <a href="#" class="hot-card">
+        <div class="hot-thumb">
+          <img src="https://picsum.photos/id/48/90/68" alt="Post em alta 1" loading="lazy">
+          <span class="hot-num">#1</span>
+        </div>
+        <div class="hot-info">
+          <span class="tag outline" style="align-self:flex-start;font-size:.65rem">Categoria A</span>
+          <span class="hot-title">Título do post mais acessado desta semana no blog</span>
+          <div class="hot-meta">
+            <span>20 abr.</span>
+            <span>· 3 min</span>
+            <span>· 4.2k views</span>
+          </div>
+        </div>
+      </a>
+      <a href="#" class="hot-card">
+        <div class="hot-thumb">
+          <img src="https://picsum.photos/id/20/90/68" alt="Post em alta 2" loading="lazy">
+          <span class="hot-num">#2</span>
+        </div>
+        <div class="hot-info">
+          <span class="tag outline" style="align-self:flex-start;font-size:.65rem">Categoria B</span>
+          <span class="hot-title">Segundo post mais lido com um título representativo</span>
+          <div class="hot-meta">
+            <span>18 abr.</span>
+            <span>· 5 min</span>
+            <span>· 3.1k views</span>
+          </div>
+        </div>
+      </a>
+      <a href="#" class="hot-card">
+        <div class="hot-thumb">
+          <img src="https://picsum.photos/id/119/90/68" alt="Post em alta 3" loading="lazy">
+          <span class="hot-num">#3</span>
+        </div>
+        <div class="hot-info">
+          <span class="tag outline" style="align-self:flex-start;font-size:.65rem">Categoria C</span>
+          <span class="hot-title">Terceiro post em alta — outro exemplo de conteúdo popular</span>
+          <div class="hot-meta">
+            <span>15 abr.</span>
+            <span>· 7 min</span>
+            <span>· 2.8k views</span>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CORPO ══ -->
+<div class="page-body">
+
+  <main>
+    <p class="section-label reveal" style="--delay:.05s">Posts Recentes</p>
+    <p class="posts-meta reveal" style="--delay:.07s">Exibindo 1–5 de 48 artigos</p>
+
+    <!-- Post 1 -->
+    <article class="post-card reveal" style="--delay:.08s">
+      <a href="#" class="post-thumb">
+        <img src="https://picsum.photos/id/0/200/140" alt="Miniatura post 1" loading="lazy">
+      </a>
+      <div class="post-info">
+        <div class="post-tags"><span class="tag outline">Categoria A</span></div>
+        <a href="#"><h2 class="post-title">Título do Primeiro Post Recente — Coloque aqui um título claro e informativo</h2></a>
+        <p class="post-excerpt">Aqui vai um trecho curto do artigo para dar ao leitor uma ideia do que será abordado. Esse texto vem automaticamente do conteúdo do post e pode ser personalizado.</p>
+        <div class="post-footer">
+          <img class="post-author-avatar" src="https://picsum.photos/id/1005/20/20" alt="Autor">
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> 20 abr. 2026</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 4 min</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> 1.2k</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 45</span>
+        </div>
+        <div class="post-share">
+          <span class="post-share-label">Compartilhar:</span>
+          <a href="#" class="share-btn tw" aria-label="Compartilhar no X"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+          <a href="#" class="share-btn wa" aria-label="Compartilhar no WhatsApp"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></a>
+          <a href="#" class="share-btn li" aria-label="Compartilhar no LinkedIn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+        </div>
+      </div>
+    </article>
+
+    <!-- Post 2 -->
+    <article class="post-card reveal" style="--delay:.16s">
+      <a href="#" class="post-thumb">
+        <img src="https://picsum.photos/id/160/200/140" alt="Miniatura post 2" loading="lazy">
+      </a>
+      <div class="post-info">
+        <div class="post-tags"><span class="tag outline">Categoria B</span></div>
+        <a href="#"><h2 class="post-title">Título do Segundo Post Recente — Outro exemplo de artigo na listagem principal</h2></a>
+        <p class="post-excerpt">Trecho de apresentação do segundo artigo. Este espaço exibirá os primeiros parágrafos ou um resumo personalizado para ajudar o leitor a decidir se quer continuar.</p>
+        <div class="post-footer">
+          <img class="post-author-avatar" src="https://picsum.photos/id/1005/20/20" alt="Autor">
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> 18 abr. 2026</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 6 min</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> 980</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 31</span>
+        </div>
+        <div class="post-share">
+          <span class="post-share-label">Compartilhar:</span>
+          <a href="#" class="share-btn tw" aria-label="X"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+          <a href="#" class="share-btn wa" aria-label="WhatsApp"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></a>
+          <a href="#" class="share-btn li" aria-label="LinkedIn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+        </div>
+      </div>
+    </article>
+
+    <!-- Post 3 -->
+    <article class="post-card reveal" style="--delay:.24s">
+      <a href="#" class="post-thumb">
+        <img src="https://picsum.photos/id/10/200/140" alt="Miniatura post 3" loading="lazy">
+      </a>
+      <div class="post-info">
+        <div class="post-tags"><span class="tag outline">Categoria C</span></div>
+        <a href="#"><h2 class="post-title">Título do Terceiro Post Recente — Mais um exemplo com temática diferente</h2></a>
+        <p class="post-excerpt">Descrição resumida do terceiro artigo. O conteúdo real virá do seu CMS e pode incluir as primeiras linhas do texto ou um resumo escrito pelo autor.</p>
+        <div class="post-footer">
+          <img class="post-author-avatar" src="https://picsum.photos/id/1005/20/20" alt="Autor">
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> 15 abr. 2026</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 3 min</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> 760</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 22</span>
+        </div>
+        <div class="post-share">
+          <span class="post-share-label">Compartilhar:</span>
+          <a href="#" class="share-btn tw" aria-label="X"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+          <a href="#" class="share-btn wa" aria-label="WhatsApp"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></a>
+          <a href="#" class="share-btn li" aria-label="LinkedIn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+        </div>
+      </div>
+    </article>
+
+    <!-- Post 4 -->
+    <article class="post-card reveal" style="--delay:.32s">
+      <a href="#" class="post-thumb">
+        <img src="https://picsum.photos/id/376/200/140" alt="Miniatura post 4" loading="lazy">
+      </a>
+      <div class="post-info">
+        <div class="post-tags"><span class="tag outline">Categoria A</span></div>
+        <a href="#"><h2 class="post-title">Título do Quarto Post — Observe como o layout acomoda títulos mais longos mantendo consistência visual</h2></a>
+        <p class="post-excerpt">Aqui vai um resumo do quarto artigo. Note que mesmo com um título longo o layout mantém a hierarquia visual e a legibilidade da listagem de posts.</p>
+        <div class="post-footer">
+          <img class="post-author-avatar" src="https://picsum.photos/id/1005/20/20" alt="Autor">
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> 12 abr. 2026</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 7 min</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> 540</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 18</span>
+        </div>
+        <div class="post-share">
+          <span class="post-share-label">Compartilhar:</span>
+          <a href="#" class="share-btn tw" aria-label="X"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+          <a href="#" class="share-btn wa" aria-label="WhatsApp"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></a>
+          <a href="#" class="share-btn li" aria-label="LinkedIn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+        </div>
+      </div>
+    </article>
+
+    <!-- Post 5 -->
+    <article class="post-card reveal" style="--delay:.40s">
+      <a href="#" class="post-thumb">
+        <img src="https://picsum.photos/id/250/200/140" alt="Miniatura post 5" loading="lazy">
+      </a>
+      <div class="post-info">
+        <div class="post-tags"><span class="tag outline">Categoria D</span></div>
+        <a href="#"><h2 class="post-title">Título do Quinto Post Recente — Último artigo da primeira página do blog</h2></a>
+        <p class="post-excerpt">Trecho de apresentação do quinto artigo. O número de posts por página é configurável — pode ser 5, 8, 10 ou o que fizer mais sentido para o seu blog.</p>
+        <div class="post-footer">
+          <img class="post-author-avatar" src="https://picsum.photos/id/1005/20/20" alt="Autor">
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> 10 abr. 2026</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 5 min</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> 390</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 14</span>
+        </div>
+        <div class="post-share">
+          <span class="post-share-label">Compartilhar:</span>
+          <a href="#" class="share-btn tw" aria-label="X"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+          <a href="#" class="share-btn wa" aria-label="WhatsApp"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></a>
+          <a href="#" class="share-btn li" aria-label="LinkedIn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+        </div>
+      </div>
+    </article>
+
+    <nav class="pagination reveal" style="--delay:.48s" aria-label="Páginas">
+      <a href="#" class="page-btn disabled">&larr; Anterior</a>
+      <a href="#" class="page-btn current" aria-current="page">1</a>
+      <a href="#" class="page-btn">2</a>
+      <a href="#" class="page-btn">3</a>
+      <span class="dots">…</span>
+      <a href="#" class="page-btn">8</a>
+      <a href="#" class="page-btn">Próxima &rarr;</a>
+    </nav>
+
+    <div class="more-in-main">
+      <p class="section-label reveal" style="--delay:.05s;margin-bottom:20px">Explore Mais Conteúdos</p>
+      <div class="cards-grid">
+
+        <a href="#" class="card reveal" style="--delay:.10s">
+          <div class="card-image">
+            <img src="https://picsum.photos/id/42/400/180" alt="Post 6" loading="lazy">
+            <div class="card-image-overlay"></div>
+            <span class="card-category-float">Categoria A</span>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Título do Sexto Post — Exemplo de card em grade de duas colunas</h3>
+            <p class="card-excerpt">Aqui vai um resumo do artigo. Esse layout em grade é ótimo para apresentar conteúdos de forma visual e atraente.</p>
+            <div class="card-footer">
+              <div class="card-author"><img src="https://picsum.photos/id/1005/24/24" alt="Autor"><span class="card-author-name">Nome do Autor</span></div>
+              <div class="card-meta"><span>8 abr.</span><span>· 4 min</span></div>
+            </div>
+          </div>
+        </a>
+
+        <a href="#" class="card reveal" style="--delay:.18s">
+          <div class="card-image">
+            <img src="https://picsum.photos/id/96/400/180" alt="Post 7" loading="lazy">
+            <div class="card-image-overlay"></div>
+            <span class="card-category-float">Categoria B</span>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Título do Sétimo Post — Outro exemplo com imagem diferente no card</h3>
+            <p class="card-excerpt">O resumo aparece abaixo da imagem. Você pode usar uma foto real ou gerada automaticamente pelo sistema.</p>
+            <div class="card-footer">
+              <div class="card-author"><img src="https://picsum.photos/id/1005/24/24" alt="Autor"><span class="card-author-name">Nome do Autor</span></div>
+              <div class="card-meta"><span>6 abr.</span><span>· 6 min</span></div>
+            </div>
+          </div>
+        </a>
+
+        <a href="#" class="card reveal" style="--delay:.26s">
+          <div class="card-image">
+            <img src="https://picsum.photos/id/133/400/180" alt="Post 8" loading="lazy">
+            <div class="card-image-overlay"></div>
+            <span class="card-category-float">Categoria C</span>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Título do Oitavo Post — Terceiro card da grade de exploração</h3>
+            <p class="card-excerpt">Cada card exibe imagem em destaque, categoria, título, resumo, autor e data. Layout responsivo automático.</p>
+            <div class="card-footer">
+              <div class="card-author"><img src="https://picsum.photos/id/1005/24/24" alt="Autor"><span class="card-author-name">Nome do Autor</span></div>
+              <div class="card-meta"><span>4 abr.</span><span>· 5 min</span></div>
+            </div>
+          </div>
+        </a>
+
+        <a href="#" class="card reveal" style="--delay:.34s">
+          <div class="card-image">
+            <img src="https://picsum.photos/id/180/400/180" alt="Post 9" loading="lazy">
+            <div class="card-image-overlay"></div>
+            <span class="card-category-float">Categoria D</span>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Título do Nono Post — Segunda linha de cards desta grade</h3>
+            <p class="card-excerpt">A grade pode exibir quantas linhas forem necessárias, sem limite. Basta adicionar mais cards ao código.</p>
+            <div class="card-footer">
+              <div class="card-author"><img src="https://picsum.photos/id/1005/24/24" alt="Autor"><span class="card-author-name">Nome do Autor</span></div>
+              <div class="card-meta"><span>2 abr.</span><span>· 3 min</span></div>
+            </div>
+          </div>
+        </a>
+
+        <a href="#" class="card reveal" style="--delay:.42s">
+          <div class="card-image">
+            <img src="https://picsum.photos/id/214/400/180" alt="Post 10" loading="lazy">
+            <div class="card-image-overlay"></div>
+            <span class="card-category-float">Categoria A</span>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Título do Décimo Post — Penúltimo card da grade de exemplo</h3>
+            <p class="card-excerpt">O hover levanta o card com sombra e o título muda de cor, dando sensação de profundidade e interatividade.</p>
+            <div class="card-footer">
+              <div class="card-author"><img src="https://picsum.photos/id/1005/24/24" alt="Autor"><span class="card-author-name">Nome do Autor</span></div>
+              <div class="card-meta"><span>30 mar.</span><span>· 7 min</span></div>
+            </div>
+          </div>
+        </a>
+
+        <a href="#" class="card reveal" style="--delay:.50s">
+          <div class="card-image">
+            <img src="https://picsum.photos/id/292/400/180" alt="Post 11" loading="lazy">
+            <div class="card-image-overlay"></div>
+            <span class="card-category-float">Categoria B</span>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Título do Décimo Primeiro Post — Último card desta seção</h3>
+            <p class="card-excerpt">Fechando a grade com seis posts no total. Abaixo desta seção, a sidebar continua com tags e newsletter.</p>
+            <div class="card-footer">
+              <div class="card-author"><img src="https://picsum.photos/id/1005/24/24" alt="Autor"><span class="card-author-name">Nome do Autor</span></div>
+              <div class="card-meta"><span>28 mar.</span><span>· 4 min</span></div>
+            </div>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="sidebar">
+
+    <!-- Sobre -->
+    <div class="sidebar-card about-card reveal from-right" style="--delay:.10s">
+      <h3>Sobre o Blog</h3>
+      <img class="about-avatar" src="https://picsum.photos/id/1005/82/82" alt="Foto do autor" loading="lazy">
+      <div class="about-name">Nome do Autor ou Blog</div>
+      <p class="about-desc">Aqui vai uma breve descrição sobre você ou sobre o blog — quem você é, o que escreve e por que o leitor deveria te seguir.</p>
+      <div class="social-links">
+        <a href="#" class="social-btn ig" aria-label="Instagram"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".5" fill="currentColor" stroke="none"/></svg></a>
+        <a href="#" class="social-btn tw" aria-label="X / Twitter"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+        <a href="#" class="social-btn yt" aria-label="YouTube"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.54C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="currentColor" stroke="none"/></svg></a>
+        <a href="#" class="social-btn li" aria-label="LinkedIn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+        <a href="#" class="social-btn fb" aria-label="Facebook"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+      </div>
+    </div>
+
+    <!-- Posts mais lidos -->
+    <div class="sidebar-card reveal from-right" style="--delay:.20s">
+      <h3>Posts Mais Lidos</h3>
+      <ul class="most-read-list">
+        <li><span class="rank-num">01</span><a href="#" class="most-read-title">Título do post mais acessado de todos os tempos no blog</a></li>
+        <li><span class="rank-num">02</span><a href="#" class="most-read-title">Segundo post mais acessado — título descritivo aqui</a></li>
+        <li><span class="rank-num">03</span><a href="#" class="most-read-title">Terceiro post mais popular entre os leitores do blog</a></li>
+        <li><span class="rank-num">04</span><a href="#" class="most-read-title">Quarto título da lista de conteúdos mais acessados</a></li>
+      </ul>
+    </div>
+
+    <!-- Categorias -->
+    <div class="sidebar-card reveal from-right" style="--delay:.28s">
+      <h3>Categorias</h3>
+      <ul class="categories-list">
+        <li><a href="#">Nome da Categoria A</a><span class="cat-count">24 posts</span></li>
+        <li><a href="#">Nome da Categoria B</a><span class="cat-count">18 posts</span></li>
+        <li><a href="#">Nome da Categoria C</a><span class="cat-count">12 posts</span></li>
+        <li><a href="#">Nome da Categoria D</a><span class="cat-count">9 posts</span></li>
+        <li><a href="#">Nome da Categoria E</a><span class="cat-count">5 posts</span></li>
+      </ul>
+    </div>
+
+    <!-- Anúncio -->
+    <div class="ad-card reveal from-right" style="--delay:.34s">
+      <p class="ad-label">Espaço para anúncio</p>
+      <div class="ad-placeholder">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        <span>Banner do anunciante</span>
+      </div>
+      <p class="ad-sizes">Tamanhos suportados: 300×250 · 300×600</p>
+    </div>
+
+    <!-- Tags -->
+    <div class="sidebar-card reveal from-right" style="--delay:.40s">
+      <h3>Nuvem de Tags</h3>
+      <div class="tag-cloud">
+        <a href="#" class="tag-pill">tag-principal</a>
+        <a href="#" class="tag-pill">sua-tag</a>
+        <a href="#" class="tag-pill">exemplo</a>
+        <a href="#" class="tag-pill">tema-do-blog</a>
+        <a href="#" class="tag-pill">assunto</a>
+        <a href="#" class="tag-pill">conteúdo</a>
+        <a href="#" class="tag-pill">dicas</a>
+        <a href="#" class="tag-pill">tutorial</a>
+        <a href="#" class="tag-pill">novidades</a>
+        <a href="#" class="tag-pill">referência</a>
+        <a href="#" class="tag-pill">guia</a>
+        <a href="#" class="tag-pill">série</a>
+      </div>
+    </div>
+
+    <!-- Newsletter -->
+    <div class="sidebar-card reveal from-right" style="--delay:.50s">
+      <h3>Newsletter</h3>
+      <p class="newsletter-desc">Receba os melhores conteúdos diretamente no seu e-mail. Sem spam — apenas o que realmente importa.</p>
+      <form class="newsletter-form" onsubmit="return false">
+        <input type="email" placeholder="seu@email.com" aria-label="E-mail">
+        <button type="submit" class="btn-newsletter">Quero receber ✓</button>
+      </form>
+    </div>
+
+  </aside>
+</div>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="footer-logo">[ SUA LOGO AQUI ]</div>
+      <p class="footer-about">Breve descrição do blog no rodapé — missão, proposta de valor ou slogan. Este texto ajuda visitantes a entender rapidamente sobre o que é o seu blog.</p>
+      <div class="footer-social">
+        <a href="#" class="footer-social-btn" aria-label="Instagram"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".5" fill="currentColor" stroke="none"/></svg></a>
+        <a href="#" class="footer-social-btn" aria-label="X / Twitter"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+        <a href="#" class="footer-social-btn" aria-label="YouTube"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.54C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="currentColor" stroke="none"/></svg></a>
+        <a href="#" class="footer-social-btn" aria-label="LinkedIn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+        <a href="#" class="footer-social-btn" aria-label="Facebook"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Links Rápidos</h4>
+      <ul class="footer-links">
+        <li><a href="#">Início</a></li>
+        <li><a href="#">Categorias</a></li>
+        <li><a href="#">Sobre</a></li>
+        <li><a href="#">Contato</a></li>
+        <li><a href="#">Política de Privacidade</a></li>
+        <li><a href="#">RSS Feed</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Categorias em Destaque</h4>
+      <ul class="footer-links">
+        <li><a href="#">Nome da Categoria A</a></li>
+        <li><a href="#">Nome da Categoria B</a></li>
+        <li><a href="#">Nome da Categoria C</a></li>
+        <li><a href="#">Nome da Categoria D</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2026 Nome do Seu Blog &mdash; Todos os direitos reservados</span>
+    <span>Desenvolvido por <a href="#">Sua Agência / Dev</a></span>
+  </div>
+</footer>
+
+<!-- ══ BACK TO TOP ══ -->
+<button class="back-top" id="backTop" onclick="scrollToTop()" aria-label="Voltar ao topo">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+</button>
+
+<!-- ══ COOKIE BANNER ══ -->
+<div class="cookie-banner" id="cookieBanner">
+  <div class="cookie-inner">
+    <span class="cookie-icon">🍪</span>
+    <div class="cookie-text">
+      <strong>Este site usa cookies</strong>
+      <p>Usamos cookies para melhorar sua experiência, personalizar conteúdo e analisar o tráfego. Ao continuar, você concorda com nossa <a href="#">Política de Privacidade</a> (LGPD).</p>
+    </div>
+    <div class="cookie-actions">
+      <button class="btn-cookie-config">Configurar</button>
+      <button class="btn-cookie-accept" onclick="acceptCookies()">Aceitar todos</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ── Mobile menu ── */
+  function toggleMenu() {
+    document.getElementById('mobileNav').classList.toggle('open');
+    document.getElementById('hamburger').classList.toggle('open');
+  }
+
+  /* ── Dark mode ── */
+  function toggleTheme() {
+    const root = document.documentElement;
+    const isDark = root.getAttribute('data-theme') === 'dark';
+    root.setAttribute('data-theme', isDark ? '' : 'dark');
+    localStorage.setItem('theme', isDark ? 'light' : 'dark');
+  }
+
+  /* ── Reading progress bar ── */
+  window.addEventListener('scroll', () => {
+    const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+    document.getElementById('reading-bar').style.width = (pct * 100) + '%';
+    document.getElementById('backTop').classList.toggle('visible', window.scrollY > 320);
+  }, { passive: true });
+
+  /* ── Back to top ── */
+  function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* ── Announcement bar ── */
+  function closeAnnounce() {
+    document.getElementById('announceBar').classList.add('hidden');
+    sessionStorage.setItem('announceClosed', '1');
+  }
+  if (sessionStorage.getItem('announceClosed')) {
+    document.getElementById('announceBar').classList.add('hidden');
+  }
+
+  /* ── Cookie banner ── */
+  function acceptCookies() {
+    document.getElementById('cookieBanner').classList.add('hidden');
+    localStorage.setItem('cookiesAccepted', '1');
+  }
+  (function () {
+    if (!localStorage.getItem('cookiesAccepted')) {
+      const b = document.getElementById('cookieBanner');
+      b.classList.add('visible');
+    } else {
+      document.getElementById('cookieBanner').classList.add('hidden');
+    }
+  })();
+
+  /* ── Scroll reveal ── */
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
+
+</body>
+</html>
