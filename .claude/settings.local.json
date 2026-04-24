@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(move \"C:/Users/bufus/Documents/projetos/blog-modelo1/public/index.html\" \"C:/Users/bufus/Documents/projetos/blog-modelo1/public/index.html.bak\")",
+      "Bash(npm run *)"
+    ]
+  }
+}
